@@ -45,15 +45,16 @@
   <section class="container" style="margin-top:24px;">
     <div style="display:flex; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:16px;">
       <button class="btn btn-primary btn-sm tab-btn" data-tab="payments">💳 Pending Payments</button>
-      <button class="btn btn-ghost btn-sm tab-btn" data-tab="jobs">🏫 Jobs</button>
-      <button class="btn btn-ghost btn-sm tab-btn" data-tab="tutors">📘 Tutors</button>
-      <button class="btn btn-ghost btn-sm tab-btn" data-tab="users">👤 Users</button>
+    <button class="btn btn-ghost btn-sm tab-btn" data-tab="jobs">🏫 Jobs</button>
+    <button class="btn btn-ghost btn-sm tab-btn" data-tab="tutors">📘 Tutors</button>
+    <button class="btn btn-ghost btn-sm tab-btn" data-tab="users">👤 Users</button>
+    <button class="btn btn-ghost btn-sm tab-btn" data-tab="referrals">🎁 Referrals</button>
     </div>
   </section>
 
   <!-- STATS -->
   <section class="container">
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:20px 0;" id="statsGrid">
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:20px 0;" id="statsGrid">
       <div style="background:var(--white); border:1px solid var(--line); border-radius:10px; padding:16px; text-align:center;">
         <div style="font-family:var(--font-display); font-size:1.6rem; font-weight:600;" id="statPending">–</div>
         <div style="font-size:0.75rem; color:var(--slate);">Pending payments</div>
@@ -70,12 +71,23 @@
         <div style="font-family:var(--font-display); font-size:1.6rem; font-weight:600;" id="statUsers">–</div>
         <div style="font-size:0.75rem; color:var(--slate);">Total users</div>
       </div>
+      <div style="background:var(--marigold); border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-family:var(--font-display); font-size:1.6rem; font-weight:600; color:var(--ink);" id="statRevenue">–</div>
+        <div style="font-size:0.75rem; color:var(--ink);">Revenue (₦)</div>
+      </div>
     </div>
   </section>
 
   <!-- PAYMENTS TAB -->
-  <section class="container tab-panel" id="tab-payments">
-    <div id="paymentsList" style="display:flex; flex-direction:column; gap:12px;"></div>
+  <!-- USERS TAB -->
+  <section class="container tab-panel" id="tab-users" style="display:none;">
+    <input type="text" id="userSearchInput" placeholder="Search by name..." style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem; margin-bottom:16px;">
+    <div id="usersList" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </section>
+
+  <!-- REFERRALS TAB -->
+  <section class="container tab-panel" id="tab-referrals" style="display:none;">
+    <div id="referralsList" style="display:flex; flex-direction:column; gap:12px;"></div>
   </section>
 
   <!-- JOBS TAB -->
@@ -117,6 +129,7 @@
 <script src="../js/supabase-client.js"></script>
 <script src="../js/notifications.js"></script>
 <script src="../js/auth-nav.js"></script>
+<script src="../js/main.js"></script>
 <script>
   // ---------- Access control ----------
   (async function checkAdmin() {
@@ -161,6 +174,7 @@
       if (tab === 'jobs') loadJobs();
       if (tab === 'tutors') loadTutors();
       if (tab === 'users') loadUsers();
+      if (tab === 'referrals') loadReferrals();
     });
   });
 
@@ -175,10 +189,15 @@
     const { count: usersCount } = await supabaseClient
       .from('profiles').select('*', { count: 'exact', head: true });
 
+    const { data: approvedPayments } = await supabaseClient
+      .from('payment_requests').select('amount').eq('status', 'approved');
+    const totalRevenue = (approvedPayments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+
     document.getElementById('statPending').textContent = pendingCount || 0;
     document.getElementById('statJobs').textContent = jobsCount || 0;
     document.getElementById('statTutors').textContent = tutorsCount || 0;
     document.getElementById('statUsers').textContent = usersCount || 0;
+    document.getElementById('statRevenue').textContent = totalRevenue.toLocaleString();
   }
 
   // ---------- Payments ----------
@@ -212,8 +231,9 @@
   }
 
   async function approvePayment(paymentId, userId) {
+    const { data: request } = await supabaseClient.from('payment_requests').select('plan').eq('id', paymentId).single();
     await supabaseClient.from('payment_requests').update({ status: 'approved' }).eq('id', paymentId);
-    await supabaseClient.from('profiles').update({ plan: 'pro' }).eq('id', userId);
+    await supabaseClient.from('profiles').update({ plan: 'pro', plan_type: request ? request.plan : null }).eq('id', userId);
     loadPayments();
     loadStats();
   }
@@ -307,6 +327,8 @@
   }
 
   // ---------- Users ----------
+  let allUsers = [];
+
   async function loadUsers() {
     const list = document.getElementById('usersList');
     list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
@@ -321,11 +343,67 @@
       return;
     }
 
-    list.innerHTML = data.map(u => `
+    allUsers = data;
+    renderUsers();
+  }
+
+  function renderUsers() {
+    const list = document.getElementById('usersList');
+    const search = document.getElementById('userSearchInput').value.toLowerCase();
+
+    const filtered = allUsers.filter(u => u.name.toLowerCase().includes(search));
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No users match your search.</p>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(u => `
       <div class="admin-card">
         <div class="info">
-          <strong>${u.name} ${u.is_admin ? '👑' : ''}</strong>
+          <strong>${u.name} ${u.is_admin ? '👑' : ''} ${u.verified ? '✅' : ''}</strong>
           <span>${u.role} · ${u.plan} plan · Joined ${new Date(u.created_at).toLocaleDateString()}</span>
+        </div>
+        <div class="admin-actions">
+          ${!u.verified ? `<button class="btn btn-sm btn-accent" onclick="verifyUser('${u.id}')">Verify</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('userSearchInput').addEventListener('input', renderUsers);
+
+  async function verifyUser(id) {
+    await supabaseClient.from('profiles').update({ verified: true }).eq('id', id);
+    loadUsers();
+  }
+
+  async function loadReferrals() {
+    const list = document.getElementById('referralsList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data, error } = await supabaseClient
+      .from('referrals')
+      .select('referrer_id, profiles!referrals_referrer_id_fkey(name)');
+
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No referrals yet.</p>';
+      return;
+    }
+
+    const counts = {};
+    data.forEach(r => {
+      const name = r.profiles ? r.profiles.name : 'Unknown';
+      counts[name] = (counts[name] || 0) + 1;
+    });
+
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+    list.innerHTML = sorted.map(([name, count]) => `
+      <div class="admin-card">
+        <div class="info">
+          <strong>${name}</strong>
+          <span>${count} referral${count !== 1 ? 's' : ''}</span>
         </div>
       </div>
     `).join('');

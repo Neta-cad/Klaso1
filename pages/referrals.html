@@ -66,6 +66,7 @@
 <script src="../js/supabase-client.js"></script>
 <script src="../js/notifications.js"></script>
 <script src="../js/auth-nav.js"></script>
+<script src="../js/main.js"></script>
 <script>
   (async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -82,8 +83,28 @@
       .select('*', { count: 'exact', head: true })
       .eq('referrer_id', session.user.id);
 
-    document.getElementById('referralCount').textContent = count || 0;
-    document.getElementById('rewardsCount').textContent = Math.floor((count || 0) / 5);
+    const referralCount = count || 0;
+    const earnedRewards = Math.floor(referralCount / 5);
+
+    document.getElementById('referralCount').textContent = referralCount;
+    document.getElementById('rewardsCount').textContent = earnedRewards;
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('referral_reward_claimed, plan')
+      .eq('id', session.user.id)
+      .single();
+
+    const alreadyClaimed = profile ? (profile.referral_reward_claimed || 0) : 0;
+
+    if (earnedRewards > alreadyClaimed) {
+      await supabaseClient
+        .from('profiles')
+        .update({ plan: 'pro', referral_reward_claimed: earnedRewards })
+        .eq('id', session.user.id);
+
+      alert('🎉 Congratulations! You just earned free Pro access for referring ' + referralCount + ' people!');
+    }
   })();
 
   document.getElementById('copyBtn').addEventListener('click', () => {

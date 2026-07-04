@@ -90,6 +90,7 @@
 <script src="../data/tutors.js"></script>
 <script src="../js/notifications.js"></script>
 <script src="../js/auth-nav.js"></script>
+<script src="../js/main.js"></script>
 <script>
   // Block access if not logged in as a tutor
   (async function checkAccess() {
@@ -115,6 +116,18 @@
       alert('Please add a profile photo before creating your listing. This helps build trust with students.');
       window.location.href = 'profile.html';
       return;
+    }
+    if (profile.plan !== 'pro') {
+      const { count } = await supabaseClient
+        .from('tutor_listings')
+        .select('*', { count: 'exact', head: true })
+        .eq('tutor_id', session.user.id);
+
+      if (count >= 1) {
+        alert('Free accounts can only have 1 tutor listing. Upgrade to Pro for unlimited listings and featured placement.');
+        window.location.href = 'pricing.html';
+        return;
+      }
     }
   })();
 

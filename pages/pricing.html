@@ -15,7 +15,7 @@
     <nav class="nav-links">
       <a href="jobs.html">Find Jobs</a>
       <a href="tutors.html">Find Tutors</a>
-      <a href="schools.html">Schools</a>
+      <a href="resources.html">Resources</a>
       <a href="pricing.html">Pricing</a>
     </nav>
     <div class="nav-actions" id="navActions">
@@ -30,39 +30,54 @@
 <section class="page-header" style="text-align:center;">
   <div class="container">
     <span class="eyebrow">Pricing</span>
-    <h1>Free to join. Pro when you're ready to grow.</h1>
-    <p class="lede" style="margin:10px auto 0;">Every account starts free. Upgrade any time.</p>
+    <h1>Pro, built for who you are.</h1>
+    <p class="lede" style="margin:10px auto 0;">Free to join. Every plan below unlocks Pro features made for your role.</p>
   </div>
 </section>
 
 <!-- ================= PLANS ================= -->
 <section style="padding: var(--gap-xl) 0;">
   <div class="container">
-    <div class="plan-grid" style="max-width:760px;">
-      <div class="plan-card" style="background:var(--white); border-color:var(--line); color:var(--ink);">
-        <div class="stamp" style="color:var(--ink); border-color:var(--line);">Free</div>
-        <div class="plan-price">₦0 <span style="color:var(--slate);">/forever</span></div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:var(--gap-md); max-width:1000px; margin:0 auto;">
+
+      <!-- SCHOOL PRO -->
+      <div class="plan-card" style="background:var(--white); border:1.5px solid var(--line); color:var(--ink);">
+        <div class="stamp" style="color:var(--marigold-deep); border-color:var(--marigold-deep);">🏫 School Pro</div>
+        <div class="plan-price">₦8,000 <span style="color:var(--slate);">/month</span></div>
         <ul class="plan-list">
-          <li>✓ 1 active job post or tutor listing</li>
-          <li>✓ Unlimited applications</li>
-          <li>✓ Basic profile & search</li>
-          <li>✓ 5 conversations / month</li>
+          <li>✓ Unlimited job posts (free: 1 active)</li>
+          <li>✓ Featured/pinned job listings</li>
+          <li>✓ Verified school badge</li>
+          <li>✓ Applicant analytics</li>
         </ul>
-        <button class="btn btn-ghost btn-block" disabled style="opacity:0.6;">Current plan</button>
+        <button class="btn btn-primary btn-block go-pro-btn" data-plan="school_pro" data-price="8000">Go Pro</button>
       </div>
 
+      <!-- TUTOR PRO -->
       <div class="plan-card is-pro">
-        <div class="stamp" style="color:var(--ink); border-color:var(--ink);">Pro</div>
-        <div class="plan-price">₦5,000 <span>/month</span></div>
+        <div class="stamp" style="color:var(--ink); border-color:var(--ink);">📘 Tutor Pro</div>
+        <div class="plan-price">₦4,000 <span>/month</span></div>
         <ul class="plan-list">
-          <li>✓ Unlimited job posts / listings</li>
-          <li>✓ Featured placement on search</li>
-          <li>✓ Verified badge</li>
-          <li>✓ Applicant tracking & analytics</li>
-          <li>✓ Unlimited messaging</li>
+          <li>✓ Unlimited listings (free: 1)</li>
+          <li>✓ Featured placement in search</li>
+          <li>✓ Verified tutor badge</li>
+          <li>✓ Priority in search results</li>
         </ul>
-        <button class="btn btn-primary btn-block" id="goProBtn">Go Pro</button>
+        <button class="btn btn-accent btn-block go-pro-btn" data-plan="tutor_pro" data-price="4000">Go Pro</button>
       </div>
+
+      <!-- TEACHER PRO -->
+      <div class="plan-card" style="background:var(--white); border:1.5px solid var(--line); color:var(--ink);">
+        <div class="stamp" style="color:var(--chalk-green); border-color:var(--chalk-green);">🎓 Teacher Pro</div>
+        <div class="plan-price">₦2,500 <span style="color:var(--slate);">/month</span></div>
+        <ul class="plan-list">
+          <li>✓ Featured profile — shows first to schools</li>
+          <li>✓ Verified badge</li>
+          <li>✓ Priority visibility on applications</li>
+        </ul>
+        <button class="btn btn-primary btn-block go-pro-btn" data-plan="teacher_pro" data-price="2500">Go Pro</button>
+      </div>
+
     </div>
   </div>
 </section>
@@ -71,7 +86,7 @@
 <div id="paymentModal" style="display:none; position:fixed; inset:0; background:rgba(27,42,74,0.6); z-index:200; align-items:center; justify-content:center; padding:20px;">
   <div style="background:var(--white); border-radius:var(--radius); padding:32px; max-width:440px; width:100%; max-height:85vh; overflow-y:auto;">
     <h3 style="margin-bottom:8px;">Complete your Pro upgrade</h3>
-    <p style="color:var(--slate); font-size:0.9rem; margin-bottom:20px;">Transfer ₦5,000 to the account below, using the reference code shown. Your account upgrades once we confirm payment — usually within a few minutes.</p>
+    <p style="color:var(--slate); font-size:0.9rem; margin-bottom:20px;">Transfer <strong id="modalAmount"></strong> to the account below, using the reference code shown. Your account upgrades once we confirm payment — usually within a few minutes.</p>
 
     <div style="background:var(--paper-dim); border-radius:10px; padding:18px; margin-bottom:16px;">
       <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dotted var(--line);">
@@ -88,7 +103,7 @@
       </div>
       <div style="display:flex; justify-content:space-between; padding:8px 0;">
         <span style="color:var(--slate); font-size:0.85rem;">Amount</span>
-        <strong>₦5,000</strong>
+        <strong id="modalAmount2"></strong>
       </div>
     </div>
 
@@ -108,7 +123,6 @@
 <script src="../js/notifications.js"></script>
 <script src="../js/auth-nav.js"></script>
 <script>
-  const goProBtn = document.getElementById('goProBtn');
   const modal = document.getElementById('paymentModal');
   const refCodeEl = document.getElementById('refCode');
   const confirmBtn = document.getElementById('confirmPaidBtn');
@@ -116,19 +130,28 @@
   const modalMsg = document.getElementById('modalMsg');
 
   let currentRef = null;
+  let currentPlan = null;
+  let currentAmount = null;
 
-  goProBtn.addEventListener('click', async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+  document.querySelectorAll('.go-pro-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
 
-    if (!session) {
-      alert('Please log in first to upgrade to Pro.');
-      window.location.href = 'login.html';
-      return;
-    }
+      if (!session) {
+        alert('Please log in first to upgrade to Pro.');
+        window.location.href = 'login.html';
+        return;
+      }
 
-    currentRef = 'KLASO-PRO-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-    refCodeEl.textContent = currentRef;
-    modal.style.display = 'flex';
+      currentPlan = btn.dataset.plan;
+      currentAmount = parseInt(btn.dataset.price);
+      currentRef = 'KLASO-' + currentPlan.toUpperCase() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+
+      refCodeEl.textContent = currentRef;
+      document.getElementById('modalAmount').textContent = '₦' + currentAmount.toLocaleString();
+      document.getElementById('modalAmount2').textContent = '₦' + currentAmount.toLocaleString();
+      modal.style.display = 'flex';
+    });
   });
 
   closeBtn.addEventListener('click', () => {
@@ -145,8 +168,8 @@
       .from('payment_requests')
       .insert({
         user_id: session.user.id,
-        plan: 'pro',
-        amount: 5000,
+        plan: currentPlan,
+        amount: currentAmount,
         reference: currentRef,
         status: 'pending'
       });
