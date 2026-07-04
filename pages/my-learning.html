@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Learning — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container">
+    <span class="eyebrow">Your journey</span>
+    <h1>My learning</h1>
+  </div>
+</section>
+
+<!-- ================= LIST ================= -->
+<section class="container" style="padding:32px 20px;">
+  <div id="bookingsList" style="display:flex; flex-direction:column; gap:14px;"></div>
+</section>
+
+<style>
+  .booking-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .status-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .status-pending { background: rgba(232,163,61,0.15); color: var(--marigold-deep); }
+  .status-confirmed { background: rgba(47,111,78,0.15); color: var(--chalk-green); }
+  .status-cancelled { background: rgba(225,91,79,0.15); color: var(--coral); }
+  .status-completed { background: var(--ink); color: var(--paper); }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/messaging.js"></script>
+<script src="../js/reviews.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  let currentUserId = null;
+
+  (async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+    currentUserId = session.user.id;
+    loadBookings();
+  })();
+
+  async function loadBookings() {
+    const list = document.getElementById('bookingsList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data: bookings, error } = await supabaseClient
+      .from('bookings')
+      .select('*, profiles!bookings_tutor_id_fkey(name)')
+      .eq('student_id', currentUserId)
+      .order('created_at', { ascending: false });
+
+    if (error || !bookings || bookings.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No bookings yet. <a href="tutors.html" style="color:var(--marigold-deep); font-weight:600;">Find a tutor →</a></p>';
+      return;
+    }
+
+    list.innerHTML = bookings.map(b => `
+      <div class="booking-card">
+        <div>
+          <strong>${b.profiles ? b.profiles.name : 'Tutor'}</strong>
+          <p style="font-size:0.78rem; color:var(--slate); margin-top:4px;">${new Date(b.created_at).toLocaleDateString()}</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="status-badge status-${b.status}">${b.status}</span>
+          ${b.status === 'completed' ? `
+            <button class="btn btn-sm btn-ghost" onclick="leaveReview('${b.tutor_id}', 'booking_${b.id}')">⭐ Review tutor</button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function leaveReview(revieweeId, context) {
+    const ratingStr = prompt('Rate this tutor from 1 to 5 stars:');
+    const rating = parseInt(ratingStr);
+
+    if (!rating || rating < 1 || rating > 5) {
+      alert('Please enter a number between 1 and 5.');
+      return;
+    }
+
+    const comment = prompt('Add a comment (optional):');
+
+    const result = await submitReview(revieweeId, rating, comment, context);
+
+    if (!result.success) {
+      alert('Error submitting review: ' + result.message);
+      return;
+    }
+
+    alert('✓ Review submitted!');
+  }
+</script>
+</body>
+</html>

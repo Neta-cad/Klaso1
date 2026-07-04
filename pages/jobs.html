@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Teaching Jobs — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="schools.html">Schools</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get started</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container">
+    <span class="eyebrow">Teaching & tutoring jobs</span>
+    <h1>Find your next classroom.</h1>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search job title or school...">
+      <select id="locationFilter">
+        <option value="">All locations</option>
+        <option value="Lagos">Lagos</option>
+        <option value="Abuja">Abuja</option>
+        <option value="Port Harcourt">Port Harcourt</option>
+        <option value="Ibadan">Ibadan</option>
+      </select>
+      <select id="typeFilter">
+        <option value="">All types</option>
+        <option value="Full-time">Full-time</option>
+        <option value="Part-time">Part-time</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LISTINGS ================= -->
+<section class="listing-layout">
+  <div class="container">
+    <p class="results-meta" id="resultsMeta">Loading jobs...</p>
+    <div class="listing-grid" id="jobsGrid"></div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="../index.html" class="logo">Kla<span>so</span></a>
+        <p>The trusted marketplace connecting Nigerian schools, teachers, and private tutors.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <a href="jobs.html">Find jobs</a>
+        <a href="tutors.html">Find tutors</a>
+        <a href="schools.html">Browse schools</a>
+        <a href="pricing.html">Pricing</a>
+      </div>
+      <div class="footer-col">
+        <h4>For Schools</h4>
+        <a href="register.html?role=school">Post a job</a>
+        <a href="pricing.html">Get verified</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Klaso. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/messaging.js"></script>
+<script src="../js/main.js"></script>
+<script src="../data/jobs.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  async function renderJobs() {
+    const grid = document.getElementById('jobsGrid');
+    const meta = document.getElementById('resultsMeta');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const location = document.getElementById('locationFilter').value;
+    const type = document.getElementById('typeFilter').value;
+
+    let jobs = await getJobs();
+
+    jobs = jobs.filter(j => {
+      const matchesSearch = j.title.toLowerCase().includes(search) || j.school.toLowerCase().includes(search);
+      const matchesLocation = !location || j.location === location;
+      const matchesType = !type || j.type === type;
+      return matchesSearch && matchesLocation && matchesType;
+    });
+
+    meta.textContent = jobs.length + ' job' + (jobs.length !== 1 ? 's' : '') + ' found';
+
+    if (jobs.length === 0) {
+      grid.innerHTML = '<div class="empty-state"><h3>No jobs match your search</h3><p>Try adjusting your filters or search term.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = jobs.map(j => `
+      <div class="job-card">
+        <div class="job-card-top">
+          <div>
+            <div class="job-school"><a href="school-profile.html?id=${j.school_id}" style="color:inherit;">${j.school_name}</a> · ${j.location}</div>
+            <h3>${j.title}</h3>
+          </div>
+          ${j.verified ? '<span class="stamp stamp-verified">Verified</span>' : ''}
+          ${j.featured && !j.verified ? '<span class="stamp stamp-pro">Featured</span>' : ''}
+          ${j.isNew && !j.verified && !j.featured ? '<span class="stamp stamp-new">New</span>' : ''}
+        </div>
+        <div class="job-meta">
+          <span class="tag">${j.type}</span>
+          <span class="tag">${j.level}</span>
+          <span class="tag">${j.mode}</span>
+        </div>
+        <p style="color:var(--slate); font-size:0.88rem; margin-bottom:16px;">${j.description}</p>
+        <div class="job-foot">
+          <span class="job-pay">${j.pay}</span>
+         <button class="btn btn-sm btn-ghost" onclick="applyToJob('${j.id}', '${j.title.replace(/'/g, "\\'")}')">Apply</button>
+         <button class="btn btn-sm btn-ghost" onclick="messageSchool('${j.school_id}')">💬 Message</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('searchInput').addEventListener('input', renderJobs);
+  document.getElementById('locationFilter').addEventListener('change', renderJobs);
+  document.getElementById('typeFilter').addEventListener('change', renderJobs);
+  async function applyToJob(jobId, jobTitle) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    alert('Please log in to apply for jobs.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('role, avatar_url')
+    .eq('id', session.user.id)
+    .single();
+
+  if (profile && profile.role === 'school') {
+    alert('School owner accounts cannot apply to jobs.');
+    return;
+  }
+  if (!profile.avatar_url) {
+    alert('Please add a profile photo before applying. This helps schools trust your application.');
+    window.location.href = 'profile.html';
+    return;
+  }
+
+  const message = prompt(`Applying for "${jobTitle}". Add a short message to the school (optional):`);
+  if (message === null) return; // user cancelled
+
+  const { error } = await supabaseClient
+    .from('applications')
+    .insert({
+      job_id: jobId,
+      applicant_id: session.user.id,
+      message: message || null
+    });
+
+  if (error) {
+    if (error.code === '23505') {
+      alert('You already applied to this job.');
+    } else {
+      alert('Error applying: ' + error.message);
+    }
+    return;
+  }
+
+  const { data: jobData } = await supabaseClient.from('jobs').select('school_id').eq('id', jobId).single();
+  if (jobData) {
+    await createNotification(jobData.school_id, 'application', `New application for "${jobTitle}"`, 'my-applicants.html');
+  }
+
+  alert('✓ Application submitted! The school will review it soon.');
+}
+async function messageSchool(schoolId) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    alert('Please log in to message this school.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  if (session.user.id === schoolId) {
+    alert('You cannot message yourself.');
+    return;
+  }
+
+  const result = await getOrCreateConversation(schoolId);
+
+  if (!result.success) {
+    alert('Error starting conversation: ' + result.message);
+    return;
+  }
+
+  window.location.href = 'chat.html?id=' + result.conversation.id;
+}
+  renderJobs();
+</script>
+</body>
+</html>

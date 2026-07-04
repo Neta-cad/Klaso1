@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PROFILE ================= -->
+<section style="padding: var(--gap-xl) 0;">
+  <div class="container" style="max-width:560px;">
+    <div id="loadingMsg" style="text-align:center; color:var(--slate); padding:60px 0;">Loading profile...</div>
+    <div id="notFoundMsg" style="display:none; text-align:center; padding:60px 0;">
+      <h2>Profile not found</h2>
+    </div>
+
+    <div id="profileContent" style="display:none;">
+      <div style="text-align:center; margin-bottom:24px;">
+        <img id="avatarImg" src="" alt="" style="width:110px; height:110px; border-radius:50%; object-fit:cover; background:var(--paper-dim); border:2px solid var(--line); display:none; margin:0 auto;">
+        <div id="avatarPlaceholder" style="width:110px; height:110px; border-radius:50%; background:var(--paper-dim); border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:2.4rem; margin:0 auto;">👤</div>
+
+        <h1 id="profileName" style="margin-top:16px; font-size:1.6rem;"></h1>
+        <div id="profileBadges" style="display:flex; justify-content:center; gap:8px; margin-top:8px; flex-wrap:wrap;"></div>
+        <p id="profileMeta" style="color:var(--slate); font-size:0.9rem; margin-top:8px;"></p>
+        <div id="ratingDisplay" style="margin-top:10px; font-size:0.9rem;"></div>
+      </div>
+
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:22px;">
+        <h3 style="font-size:1rem; margin-bottom:10px;">About</h3>
+        <p id="profileBio" style="color:var(--slate); font-size:0.92rem; line-height:1.6;"></p>
+
+        <div id="phoneRow" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+          <span style="font-size:0.8rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.05em;">Phone</span>
+          <p id="profilePhone" style="font-weight:600; margin-top:4px;"></p>
+        </div>
+      </div>
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-top:20px;">
+        <h3 style="font-size:1rem; margin-bottom:14px;">Reviews</h3>
+        <div id="reviewsList">Loading...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  (async function loadProfile() {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('id');
+
+    if (!userId) {
+      document.getElementById('loadingMsg').style.display = 'none';
+      document.getElementById('notFoundMsg').style.display = 'block';
+      return;
+    }
+
+    const { data: profile, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    document.getElementById('loadingMsg').style.display = 'none';
+
+    if (error || !profile) {
+      document.getElementById('notFoundMsg').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('profileContent').style.display = 'block';
+    loadReviews();
+    document.getElementById('profileName').textContent = profile.name;
+
+    const roleLabels = { school: 'School Owner', teacher: 'Teacher', tutor: 'Tutor', student: 'Student/Parent' };
+    document.getElementById('profileMeta').textContent =
+      (roleLabels[profile.role] || profile.role) + (profile.location ? ' · ' + profile.location : '');
+
+    let badges = '';
+    if (profile.verified) badges += '<span class="stamp stamp-verified">Verified</span>';
+    if (profile.plan === 'pro') badges += '<span class="stamp stamp-pro">Pro</span>';
+    document.getElementById('profileBadges').innerHTML = badges;
+
+    document.getElementById('profileBio').textContent = profile.bio_full || 'No bio added yet.';
+
+    if (profile.avatar_url) {
+      document.getElementById('avatarImg').src = profile.avatar_url;
+      document.getElementById('avatarImg').style.display = 'block';
+      document.getElementById('avatarPlaceholder').style.display = 'none';
+    }
+
+    if (profile.phone_public && profile.phone) {
+      document.getElementById('phoneRow').style.display = 'block';
+      document.getElementById('profilePhone').textContent = profile.phone;
+    }
+  })();
+  async function loadReviews() {
+    const { average, count } = await getAverageRating(userId);
+    const ratingDisplay = document.getElementById('ratingDisplay');
+
+    if (count === 0) {
+      ratingDisplay.innerHTML = '<span style="color:var(--slate);">No reviews yet</span>';
+    } else {
+      ratingDisplay.innerHTML = `<span style="color:var(--marigold-deep);">${renderStars(average)}</span> <span style="color:var(--slate);">${average} (${count} review${count !== 1 ? 's' : ''})</span>`;
+    }
+
+    const reviews = await getReviewsFor(userId);
+    const list = document.getElementById('reviewsList');
+
+    if (reviews.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate); font-size:0.88rem;">No reviews yet.</p>';
+      return;
+    }
+
+    list.innerHTML = reviews.map(r => `
+      <div style="padding:12px 0; border-top:1px solid var(--line);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:0.88rem;">${r.profiles ? r.profiles.name : 'Anonymous'}</strong>
+          <span style="color:var(--marigold-deep); font-size:0.85rem;">${renderStars(r.rating)}</span>
+        </div>
+        ${r.comment ? `<p style="font-size:0.85rem; color:var(--slate); margin-top:6px;">"${r.comment}"</p>` : ''}
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>

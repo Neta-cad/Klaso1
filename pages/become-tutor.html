@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Become a Tutor — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="schools.html">Schools</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get started</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container">
+    <span class="eyebrow">For tutors</span>
+    <h1>Create your tutor listing.</h1>
+    <p class="lede" style="margin-top:10px;">Your first listing is free. Fill in the details below.</p>
+  </div>
+</section>
+
+<!-- ================= FORM ================= -->
+<section style="padding: var(--gap-lg) 0;">
+  <div class="container" style="max-width:640px;">
+    <form id="tutorForm" style="display:flex; flex-direction:column; gap:16px;">
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Subjects you teach</label>
+        <input type="text" id="subjects" required placeholder="e.g. Mathematics, Physics (comma-separated)"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Location</label>
+          <select id="location" required style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+            <option value="Lagos">Lagos</option>
+            <option value="Abuja">Abuja</option>
+            <option value="Port Harcourt">Port Harcourt</option>
+            <option value="Ibadan">Ibadan</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Mode</label>
+          <select id="mode" required style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+            <option value="Online">Online</option>
+            <option value="In-person">In-person</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Rate per session</label>
+        <input type="text" id="rate" required placeholder="e.g. ₦5,000/session"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">About you</label>
+        <textarea id="bio" required rows="4" placeholder="Your experience, teaching style, and what makes you a great tutor..."
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem; resize:vertical;"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-accent btn-block" style="margin-top:8px;">Create listing — it's free</button>
+      <p id="errorMsg" style="display:none; color:var(--coral); font-size:0.88rem; font-weight:600;"></p>
+      <p id="successMsg" style="display:none; color:var(--chalk-green); font-weight:600; text-align:center;">✓ Listing created! Redirecting to tutors board...</p>
+    </form>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../data/tutors.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  // Block access if not logged in as a tutor
+  (async function checkAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      alert('Please log in as a tutor to create a listing.');
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || profile.role !== 'tutor') {
+      alert('Only tutor accounts can create tutor listings.');
+      window.location.href = '../index.html';
+    }
+    if (!profile.avatar_url) {
+      alert('Please add a profile photo before creating your listing. This helps build trust with students.');
+      window.location.href = 'profile.html';
+      return;
+    }
+  })();
+
+  document.getElementById('tutorForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.style.display = 'none';
+
+    const submitBtn = document.querySelector('#tutorForm button[type="submit"]');
+    submitBtn.textContent = 'Creating...';
+    submitBtn.disabled = true;
+
+    const subjectsArray = document.getElementById('subjects').value
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    const newListing = {
+      subjects: subjectsArray,
+      location: document.getElementById('location').value,
+      mode: document.getElementById('mode').value,
+      rate: document.getElementById('rate').value,
+      bio: document.getElementById('bio').value
+    };
+
+    const result = await addTutorListing(newListing);
+
+    if (!result.success) {
+      errorMsg.textContent = result.message;
+      errorMsg.style.display = 'block';
+      submitBtn.textContent = 'Create listing — it\'s free';
+      submitBtn.disabled = false;
+      return;
+    }
+
+    document.getElementById('tutorForm').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+
+    setTimeout(() => {
+      window.location.href = 'tutors.html';
+    }, 1500);
+  });
+</script>
+</body>
+</html>

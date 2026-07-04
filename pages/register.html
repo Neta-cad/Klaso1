@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your Account — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="schools.html">Schools</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+   <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= FORM ================= -->
+<section style="padding: var(--gap-lg) 0;">
+  <div class="container" style="max-width:520px;">
+    <div style="text-align:center; margin-bottom:32px;">
+      <span class="eyebrow">Join Klaso</span>
+      <h1 style="font-size:clamp(1.8rem,4vw,2.4rem); margin-top:6px;">Create your account</h1>
+      <p class="lede" style="margin:10px auto 0;">Free to join. Takes less than two minutes.</p>
+    </div>
+
+    <form id="registerForm" style="display:flex; flex-direction:column; gap:16px;">
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:8px;">I am a...</label>
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;" id="roleGrid">
+          <label class="role-pick"><input type="radio" name="role" value="school"> 🏫 School Owner</label>
+          <label class="role-pick"><input type="radio" name="role" value="teacher"> 🎓 Teacher</label>
+          <label class="role-pick"><input type="radio" name="role" value="tutor"> 📘 Tutor</label>
+          <label class="role-pick"><input type="radio" name="role" value="student"> 👤 Student/Parent</label>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Full name / School name</label>
+        <input type="text" id="name" required placeholder="e.g. Chidinma Okafor"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Email address</label>
+        <input type="email" id="email" required placeholder="you@example.com"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Password</label>
+        <input type="password" id="password" required minlength="6" placeholder="At least 6 characters"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <p id="errorMsg" style="display:none; color:var(--coral); font-size:0.88rem; font-weight:600;"></p>
+
+      <button type="submit" class="btn btn-accent btn-block" id="submitBtn" style="margin-top:8px;">Create account</button>
+      <p id="successMsg" style="display:none; color:var(--chalk-green); font-weight:600; text-align:center;">✓ Account created! Check your email to confirm, then log in.</p>
+
+      <p style="text-align:center; font-size:0.88rem; color:var(--slate);">
+        Already have an account? <a href="login.html" style="color:var(--marigold-deep); font-weight:600;">Log in</a>
+      </p>
+    </form>
+  </div>
+</section>
+
+<style>
+  .role-pick {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .role-pick:has(input:checked) {
+    border-color: var(--marigold-deep);
+    background: rgba(232,163,61,0.08);
+  }
+  .role-pick input { accent-color: var(--marigold-deep); }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  // Pre-select role from URL, e.g. register.html?role=school
+  const params = new URLSearchParams(window.location.search);
+  const preRole = params.get('role');
+  if (preRole) {
+    const match = document.querySelector(`input[name="role"][value="${preRole}"]`);
+    if (match) match.checked = true;
+  }
+  
+  const referrerId = params.get('ref');
+
+  document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const role = document.querySelector('input[name="role"]:checked');
+    const errorMsg = document.getElementById('errorMsg');
+    const submitBtn = document.getElementById('submitBtn');
+    errorMsg.style.display = 'none';
+
+    if (!role) {
+      errorMsg.textContent = 'Please select who you are.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    submitBtn.textContent = 'Creating account...';
+    submitBtn.disabled = true;
+
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          name: name,
+          role: role.value
+        }
+      }
+    });
+
+    if (error) {
+      errorMsg.textContent = error.message;
+      errorMsg.style.display = 'block';
+      submitBtn.textContent = 'Create account';
+      submitBtn.disabled = false;
+      return;
+    }
+
+    if (referrerId && data.user && referrerId !== data.user.id) {
+      await supabaseClient.from('referrals').insert({
+        referrer_id: referrerId,
+        referred_id: data.user.id
+      });
+    }
+
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+    document.getElementById('successMsg').textContent = '✓ Account created! Redirecting...';
+
+    setTimeout(() => {
+      window.location.href = '../index.html';
+    }, 1200);
+  });
+</script>
+</body>
+</html>

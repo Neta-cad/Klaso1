@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="messages.html">Messages</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= CHAT HEADER ================= -->
+<section style="border-bottom:1px solid var(--line); padding:16px 20px; display:flex; align-items:center; gap:12px;">
+  <a href="messages.html" style="font-size:1.3rem; color:var(--ink);">←</a>
+  <img id="otherAvatar" src="" style="width:38px; height:38px; border-radius:50%; object-fit:cover; background:var(--paper-dim); display:none;">
+  <div id="otherAvatarPlaceholder" style="width:38px; height:38px; border-radius:50%; background:var(--paper-dim); display:flex; align-items:center; justify-content:center;">👤</div>
+  <strong id="otherName">Loading...</strong>
+</section>
+
+<!-- ================= MESSAGES ================= -->
+<section id="messagesArea" style="padding:20px; display:flex; flex-direction:column; gap:10px; min-height:50vh; max-width:640px; margin:0 auto;"></section>
+
+<!-- ================= INPUT ================= -->
+<section style="position:sticky; bottom:0; background:var(--paper); border-top:1px solid var(--line); padding:14px 20px;">
+  <form id="sendForm" style="display:flex; gap:10px; max-width:640px; margin:0 auto;">
+    <input type="text" id="messageInput" placeholder="Type a message..." required
+      style="flex:1; padding:12px 16px; border:1.5px solid var(--line); border-radius:999px; font-family:var(--font-body); font-size:0.92rem;">
+    <button type="submit" class="btn btn-accent btn-sm">Send</button>
+  </form>
+</section>
+
+<style>
+  .msg-bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  .msg-mine {
+    align-self: flex-end;
+    background: var(--marigold);
+    color: var(--ink);
+    border-bottom-right-radius: 4px;
+  }
+  .msg-theirs {
+    align-self: flex-start;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/messaging.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  let myId = null;
+  let conversationId = null;
+  let otherUserId = null;
+
+  (async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+    myId = session.user.id;
+
+    const params = new URLSearchParams(window.location.search);
+    conversationId = params.get('id');
+
+    if (!conversationId) {
+      window.location.href = 'messages.html';
+      return;
+    }
+
+    // Load conversation to find the other person
+    const { data: conv } = await supabaseClient
+      .from('conversations')
+      .select('*')
+      .eq('id', conversationId)
+      .single();
+
+    if (!conv) {
+      window.location.href = 'messages.html';
+      return;
+    }
+
+    const otherId = conv.user_a === myId ? conv.user_b : conv.user_a;
+    otherUserId = otherId;
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('name, avatar_url')
+      .eq('id', otherId)
+      .single();
+
+    document.getElementById('otherName').textContent = profile ? profile.name : 'Unknown user';
+    if (profile && profile.avatar_url) {
+      document.getElementById('otherAvatar').src = profile.avatar_url;
+      document.getElementById('otherAvatar').style.display = 'block';
+      document.getElementById('otherAvatarPlaceholder').style.display = 'none';
+    }
+
+    loadAndRenderMessages();
+  })();
+
+  async function loadAndRenderMessages() {
+    const area = document.getElementById('messagesArea');
+    const messages = await getMessages(conversationId);
+
+    if (messages.length === 0) {
+      area.innerHTML = '<p style="color:var(--slate); text-align:center;">No messages yet. Say hello!</p>';
+      return;
+    }
+
+    area.innerHTML = messages.map(m => `
+      <div class="msg-bubble ${m.sender_id === myId ? 'msg-mine' : 'msg-theirs'}">
+        ${m.content}
+      </div>
+    `).join('');
+
+    area.scrollTop = area.scrollHeight;
+  }
+
+  document.getElementById('sendForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('messageInput');
+    const content = input.value.trim();
+    if (!content) return;
+
+    input.value = '';
+    await sendMessage(conversationId, content);
+    if (otherUserId) {
+      await createNotification(otherUserId, 'message', 'You have a new message', 'messages.html');
+    }
+    loadAndRenderMessages();
+  });
+
+  // Simple polling for new messages every 4 seconds
+  setInterval(loadAndRenderMessages, 4000);
+</script>
+</body>
+</html>

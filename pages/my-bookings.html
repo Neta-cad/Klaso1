@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Bookings — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container">
+    <span class="eyebrow">Tutor dashboard</span>
+    <h1>My booking requests</h1>
+  </div>
+</section>
+
+<!-- ================= ACCESS DENIED ================= -->
+<div id="accessDenied" style="display:none; text-align:center; padding:80px 20px;">
+  <h2>🚫 This page is for tutors only</h2>
+  <p style="color:var(--slate); margin-top:10px;">Log in with a tutor account to view your bookings.</p>
+</div>
+
+<!-- ================= LIST ================= -->
+<section class="container" id="bookingsSection" style="display:none; padding:32px 20px;">
+  <div id="bookingsList" style="display:flex; flex-direction:column; gap:14px;"></div>
+</section>
+
+<style>
+  .booking-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .status-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .status-pending { background: rgba(232,163,61,0.15); color: var(--marigold-deep); }
+  .status-confirmed { background: rgba(47,111,78,0.15); color: var(--chalk-green); }
+  .status-cancelled { background: rgba(225,91,79,0.15); color: var(--coral); }
+  .status-completed { background: var(--ink); color: var(--paper); }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/messaging.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  let currentUserId = null;
+
+  (async function checkAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || profile.role !== 'tutor') {
+      document.getElementById('accessDenied').style.display = 'block';
+      return;
+    }
+
+    currentUserId = session.user.id;
+    document.getElementById('bookingsSection').style.display = 'block';
+    loadBookings();
+  })();
+
+  async function loadBookings() {
+    const list = document.getElementById('bookingsList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data: bookings, error } = await supabaseClient
+      .from('bookings')
+      .select('*, profiles(name)')
+      .eq('tutor_id', currentUserId)
+      .order('created_at', { ascending: false });
+
+    if (error || !bookings || bookings.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No booking requests yet.</p>';
+      return;
+    }
+
+    list.innerHTML = bookings.map(b => `
+      <div class="booking-card">
+        <div>
+          <strong><a href="view-profile.html?id=${b.student_id}" style="color:inherit;">${b.profiles ? b.profiles.name : 'Student'}</a></strong>
+          ${b.message ? `<p style="font-size:0.85rem; color:var(--slate); margin-top:4px;">"${b.message}"</p>` : ''}
+          <span style="font-size:0.78rem; color:var(--slate);">${new Date(b.created_at).toLocaleDateString()}</span>
+          <br><button class="btn btn-sm btn-ghost" style="margin-top:6px;" onclick="messageStudent('${b.student_id}')">💬 Message</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="status-badge status-${b.status}">${b.status}</span>
+          ${b.status === 'pending' ? `
+            <button class="btn btn-sm btn-accent" onclick="updateBooking('${b.id}', 'confirmed', '${b.student_id}')">Confirm</button>
+            <button class="btn btn-sm btn-ghost" onclick="updateBooking('${b.id}', 'cancelled', '${b.student_id}')">Decline</button>
+          ` : ''}
+          ${b.status === 'confirmed' ? `
+            <button class="btn btn-sm btn-primary" onclick="updateBooking('${b.id}', 'completed', '${b.student_id}')">Mark completed</button>
+          ` : ''}
+          ${b.status === 'completed' ? `
+            <button class="btn btn-sm btn-ghost" onclick="leaveReview('${b.student_id}', 'booking_${b.id}')">⭐ Review</button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function updateBooking(bookingId, newStatus, studentId) {
+    await supabaseClient
+      .from('bookings')
+      .update({ status: newStatus })
+      .eq('id', bookingId);
+
+    const statusMessages = {
+      confirmed: 'Your booking was confirmed! 🎉',
+      cancelled: 'Your booking request was declined.',
+      completed: 'Your session was marked as completed.'
+    };
+    if (statusMessages[newStatus]) {
+      await createNotification(studentId, 'booking_update', statusMessages[newStatus], 'tutors.html');
+    }
+
+    loadBookings();
+  }
+  async function messageStudent(studentId) {
+    const result = await getOrCreateConversation(studentId);
+    if (!result.success) {
+      alert('Error: ' + result.message);
+      return;
+    }
+    window.location.href = 'chat.html?id=' + result.conversation.id;
+  }
+  async function leaveReview(revieweeId, context) {
+    const ratingStr = prompt('Rate this student from 1 to 5 stars:');
+    const rating = parseInt(ratingStr);
+
+    if (!rating || rating < 1 || rating > 5) {
+      alert('Please enter a number between 1 and 5.');
+      return;
+    }
+
+    const comment = prompt('Add a comment (optional):');
+
+    const result = await submitReview(revieweeId, rating, comment, context);
+
+    if (!result.success) {
+      alert('Error submitting review: ' + result.message);
+      return;
+    }
+
+    alert('✓ Review submitted!');
+  }
+</script>
+</body>
+</html>

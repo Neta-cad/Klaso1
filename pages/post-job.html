@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post a Job — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="schools.html">Schools</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get started</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container">
+    <span class="eyebrow">For school owners</span>
+    <h1>Post a job opening.</h1>
+    <p class="lede" style="margin-top:10px;">Your first job post is free. Fill in the details below.</p>
+  </div>
+</section>
+
+<!-- ================= FORM ================= -->
+<section style="padding: var(--gap-lg) 0;">
+  <div class="container" style="max-width:640px;">
+    <form id="jobForm" style="display:flex; flex-direction:column; gap:16px;">
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Job title</label>
+        <input type="text" id="title" required placeholder="e.g. Mathematics Teacher"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">School name</label>
+        <input type="text" id="school" required placeholder="e.g. Greenfield College"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Location</label>
+          <select id="location" required style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+            <option value="Lagos">Lagos</option>
+            <option value="Abuja">Abuja</option>
+            <option value="Port Harcourt">Port Harcourt</option>
+            <option value="Ibadan">Ibadan</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Job type</label>
+          <select id="type" required style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+            <option value="Full-time">Full-time</option>
+            <option value="Part-time">Part-time</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Level</label>
+          <input type="text" id="level" required placeholder="e.g. SS1–SS3"
+            style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Mode</label>
+          <select id="mode" required style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+            <option value="On-site">On-site</option>
+            <option value="Remote">Remote</option>
+            <option value="Hybrid">Hybrid</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Salary / pay</label>
+        <input type="text" id="pay" required placeholder="e.g. ₦120,000 – ₦180,000/mo"
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Description</label>
+        <textarea id="description" required rows="4" placeholder="Describe the role, requirements, and what makes your school great..."
+          style="width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.95rem; resize:vertical;"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-accent btn-block" style="margin-top:8px;">Post job — it's free</button>
+      <p id="successMsg" style="display:none; color:var(--chalk-green); font-weight:600; text-align:center;">✓ Job posted successfully! Redirecting to jobs board...</p>
+    </form>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../data/jobs.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  // Block access if not logged in as a school owner
+  (async function checkAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      alert('Please log in as a school owner to post a job.');
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role, avatar_url')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || profile.role !== 'school') {
+      alert('Only school owner accounts can post jobs.');
+      window.location.href = '../index.html';
+    }
+    if (!profile.avatar_url) {
+      alert('Please add a profile photo before posting a job. This helps build trust with applicants.');
+      window.location.href = 'profile.html';
+      return;
+    }
+  })();
+
+  document.getElementById('jobForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const descriptionValue = document.getElementById('description').value.trim();
+    const wordCount = descriptionValue.split(/\s+/).filter(Boolean).length;
+    const MIN_WORDS = 40;
+
+    if (wordCount < MIN_WORDS) {
+      alert(`Your description is too short (${wordCount} words). Please write at least ${MIN_WORDS} words describing the role, so applicants know what to expect.`);
+      return;
+    }
+
+    const submitBtn = document.querySelector('#jobForm button[type="submit"]');
+    submitBtn.textContent = 'Posting...';
+    submitBtn.disabled = true;
+
+    const newJob = {
+      title: document.getElementById('title').value,
+      school: document.getElementById('school').value,
+      location: document.getElementById('location').value,
+      type: document.getElementById('type').value,
+      level: document.getElementById('level').value,
+      mode: document.getElementById('mode').value,
+      pay: document.getElementById('pay').value,
+      description: document.getElementById('description').value
+    };
+
+    const result = await addJob(newJob);
+
+    if (!result.success) {
+      alert('Error posting job: ' + result.message);
+      submitBtn.textContent = 'Post job — it\'s free';
+      submitBtn.disabled = false;
+      return;
+    }
+
+    document.getElementById('jobForm').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+
+    setTimeout(() => {
+      window.location.href = 'jobs.html';
+    }, 1500);
+  });
+</script>
+</body>
+</html>

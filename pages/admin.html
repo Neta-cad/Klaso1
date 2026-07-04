@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container">
+    <span class="eyebrow">Admin</span>
+    <h1>Dashboard</h1>
+  </div>
+</section>
+
+<!-- ================= ACCESS DENIED ================= -->
+<div id="accessDenied" style="display:none; text-align:center; padding:80px 20px;">
+  <h2>🚫 Access denied</h2>
+  <p style="color:var(--slate); margin-top:10px;">This page is only for Klaso admins.</p>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div id="dashboard" style="display:none;">
+
+  <!-- TABS -->
+  <section class="container" style="margin-top:24px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:16px;">
+      <button class="btn btn-primary btn-sm tab-btn" data-tab="payments">💳 Pending Payments</button>
+      <button class="btn btn-ghost btn-sm tab-btn" data-tab="jobs">🏫 Jobs</button>
+      <button class="btn btn-ghost btn-sm tab-btn" data-tab="tutors">📘 Tutors</button>
+      <button class="btn btn-ghost btn-sm tab-btn" data-tab="users">👤 Users</button>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="container">
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:20px 0;" id="statsGrid">
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-family:var(--font-display); font-size:1.6rem; font-weight:600;" id="statPending">–</div>
+        <div style="font-size:0.75rem; color:var(--slate);">Pending payments</div>
+      </div>
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-family:var(--font-display); font-size:1.6rem; font-weight:600;" id="statJobs">–</div>
+        <div style="font-size:0.75rem; color:var(--slate);">Total jobs</div>
+      </div>
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-family:var(--font-display); font-size:1.6rem; font-weight:600;" id="statTutors">–</div>
+        <div style="font-size:0.75rem; color:var(--slate);">Total tutors</div>
+      </div>
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-family:var(--font-display); font-size:1.6rem; font-weight:600;" id="statUsers">–</div>
+        <div style="font-size:0.75rem; color:var(--slate);">Total users</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAYMENTS TAB -->
+  <section class="container tab-panel" id="tab-payments">
+    <div id="paymentsList" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </section>
+
+  <!-- JOBS TAB -->
+  <section class="container tab-panel" id="tab-jobs" style="display:none;">
+    <div id="jobsList" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </section>
+
+  <!-- TUTORS TAB -->
+  <section class="container tab-panel" id="tab-tutors" style="display:none;">
+    <div id="tutorsList" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </section>
+
+  <!-- USERS TAB -->
+  <section class="container tab-panel" id="tab-users" style="display:none;">
+    <div id="usersList" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </section>
+
+</div>
+
+<style>
+  .admin-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .admin-card .info { flex: 1; min-width: 200px; }
+  .admin-card .info strong { display: block; font-size: 0.95rem; }
+  .admin-card .info span { font-size: 0.82rem; color: var(--slate); }
+  .admin-actions { display: flex; gap: 8px; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  // ---------- Access control ----------
+  (async function checkAdmin() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || !profile.is_admin) {
+      document.getElementById('accessDenied').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('dashboard').style.display = 'block';
+    loadStats();
+    loadPayments();
+  })();
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-ghost');
+      });
+      btn.classList.remove('btn-ghost');
+      btn.classList.add('btn-primary');
+
+      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+      const tab = btn.dataset.tab;
+      document.getElementById('tab-' + tab).style.display = 'block';
+
+      if (tab === 'payments') loadPayments();
+      if (tab === 'jobs') loadJobs();
+      if (tab === 'tutors') loadTutors();
+      if (tab === 'users') loadUsers();
+    });
+  });
+
+  // ---------- Stats ----------
+  async function loadStats() {
+    const { count: pendingCount } = await supabaseClient
+      .from('payment_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+    const { count: jobsCount } = await supabaseClient
+      .from('jobs').select('*', { count: 'exact', head: true });
+    const { count: tutorsCount } = await supabaseClient
+      .from('tutor_listings').select('*', { count: 'exact', head: true });
+    const { count: usersCount } = await supabaseClient
+      .from('profiles').select('*', { count: 'exact', head: true });
+
+    document.getElementById('statPending').textContent = pendingCount || 0;
+    document.getElementById('statJobs').textContent = jobsCount || 0;
+    document.getElementById('statTutors').textContent = tutorsCount || 0;
+    document.getElementById('statUsers').textContent = usersCount || 0;
+  }
+
+  // ---------- Payments ----------
+  async function loadPayments() {
+    const list = document.getElementById('paymentsList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data, error } = await supabaseClient
+      .from('payment_requests')
+      .select('*, profiles(name, email:id)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No pending payments.</p>';
+      return;
+    }
+
+    list.innerHTML = data.map(p => `
+      <div class="admin-card">
+        <div class="info">
+          <strong>${p.profiles ? p.profiles.name : 'Unknown user'}</strong>
+          <span>Ref: ${p.reference} · ₦${p.amount} · ${new Date(p.created_at).toLocaleDateString()}</span>
+        </div>
+        <div class="admin-actions">
+          <button class="btn btn-accent btn-sm" onclick="approvePayment('${p.id}', '${p.user_id}')">Approve</button>
+          <button class="btn btn-ghost btn-sm" onclick="rejectPayment('${p.id}')">Reject</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function approvePayment(paymentId, userId) {
+    await supabaseClient.from('payment_requests').update({ status: 'approved' }).eq('id', paymentId);
+    await supabaseClient.from('profiles').update({ plan: 'pro' }).eq('id', userId);
+    loadPayments();
+    loadStats();
+  }
+
+  async function rejectPayment(paymentId) {
+    await supabaseClient.from('payment_requests').update({ status: 'rejected' }).eq('id', paymentId);
+    loadPayments();
+    loadStats();
+  }
+
+  // ---------- Jobs ----------
+  async function loadJobs() {
+    const list = document.getElementById('jobsList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data, error } = await supabaseClient
+      .from('jobs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No jobs yet.</p>';
+      return;
+    }
+
+    list.innerHTML = data.map(j => `
+      <div class="admin-card">
+        <div class="info">
+          <strong>${j.title} — ${j.school_name}</strong>
+          <span>${j.location} · ${j.type} · ${j.verified ? 'Verified' : 'Not verified'} · ${j.status}</span>
+        </div>
+        <div class="admin-actions">
+          ${!j.verified ? `<button class="btn btn-accent btn-sm" onclick="verifyJob('${j.id}')">Verify</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="deleteJob('${j.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function verifyJob(id) {
+    await supabaseClient.from('jobs').update({ verified: true }).eq('id', id);
+    loadJobs();
+  }
+
+  async function deleteJob(id) {
+    if (!confirm('Delete this job permanently?')) return;
+    await supabaseClient.from('jobs').delete().eq('id', id);
+    loadJobs();
+    loadStats();
+  }
+
+  // ---------- Tutors ----------
+  async function loadTutors() {
+    const list = document.getElementById('tutorsList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data, error } = await supabaseClient
+      .from('tutor_listings')
+      .select('*, profiles(name)')
+      .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No tutor listings yet.</p>';
+      return;
+    }
+
+    list.innerHTML = data.map(t => `
+      <div class="admin-card">
+        <div class="info">
+          <strong>${t.profiles ? t.profiles.name : 'Tutor'}</strong>
+          <span>${t.subjects.join(', ')} · ${t.location} · ${t.verified ? 'Verified' : 'Not verified'}</span>
+        </div>
+        <div class="admin-actions">
+          ${!t.verified ? `<button class="btn btn-accent btn-sm" onclick="verifyTutor('${t.id}')">Verify</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="deleteTutor('${t.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function verifyTutor(id) {
+    await supabaseClient.from('tutor_listings').update({ verified: true }).eq('id', id);
+    loadTutors();
+  }
+
+  async function deleteTutor(id) {
+    if (!confirm('Delete this tutor listing permanently?')) return;
+    await supabaseClient.from('tutor_listings').delete().eq('id', id);
+    loadTutors();
+    loadStats();
+  }
+
+  // ---------- Users ----------
+  async function loadUsers() {
+    const list = document.getElementById('usersList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No users yet.</p>';
+      return;
+    }
+
+    list.innerHTML = data.map(u => `
+      <div class="admin-card">
+        <div class="info">
+          <strong>${u.name} ${u.is_admin ? '👑' : ''}</strong>
+          <span>${u.role} · ${u.plan} plan · Joined ${new Date(u.created_at).toLocaleDateString()}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>

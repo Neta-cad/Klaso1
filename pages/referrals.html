@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refer & Earn — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="resources.html">Resources</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header" style="text-align:center;">
+  <div class="container">
+    <span class="eyebrow">Grow with us</span>
+    <h1>Refer friends, earn rewards.</h1>
+    <p class="lede" style="margin:10px auto 0;">Share your link. When someone joins using it, you both benefit.</p>
+  </div>
+</section>
+
+<section style="padding: var(--gap-lg) 0;">
+  <div class="container" style="max-width:520px;">
+
+    <div style="background:var(--white); border:1px solid var(--line); border-radius:var(--radius); padding:24px; text-align:center; margin-bottom:24px;">
+      <span style="font-size:0.8rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.05em;">Your referral link</span>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <input type="text" id="refLink" readonly style="flex:1; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-mono); font-size:0.82rem; background:var(--paper-dim);">
+        <button id="copyBtn" class="btn btn-primary btn-sm">Copy</button>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:10px; padding:18px; text-align:center;">
+        <div style="font-family:var(--font-display); font-size:1.8rem; font-weight:600;" id="referralCount">–</div>
+        <div style="font-size:0.78rem; color:var(--slate);">People referred</div>
+      </div>
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:10px; padding:18px; text-align:center;">
+        <div style="font-family:var(--font-display); font-size:1.8rem; font-weight:600;" id="rewardsCount">–</div>
+        <div style="font-size:0.78rem; color:var(--slate);">Rewards earned</div>
+      </div>
+    </div>
+
+    <div style="background:var(--paper-dim); border-radius:var(--radius); padding:20px; font-size:0.88rem; color:var(--slate);">
+      <strong style="color:var(--ink); display:block; margin-bottom:6px;">How it works</strong>
+      Share your link with schools, teachers, or tutors. When they sign up using it, they're added to your referral count. Reach 5 referrals to unlock one month of Pro, free.
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  (async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const link = window.location.origin + '/pages/register.html?ref=' + session.user.id;
+    document.getElementById('refLink').value = link;
+
+    const { count } = await supabaseClient
+      .from('referrals')
+      .select('*', { count: 'exact', head: true })
+      .eq('referrer_id', session.user.id);
+
+    document.getElementById('referralCount').textContent = count || 0;
+    document.getElementById('rewardsCount').textContent = Math.floor((count || 0) / 5);
+  })();
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const input = document.getElementById('refLink');
+    input.select();
+    navigator.clipboard.writeText(input.value);
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <span class="eyebrow">Updates</span>
+      <h1>Notifications</h1>
+    </div>
+    <button id="markAllBtn" class="btn btn-ghost btn-sm">Mark all read</button>
+  </div>
+</section>
+
+<!-- ================= LIST ================= -->
+<section class="container" style="padding:32px 20px; max-width:640px;">
+  <div id="notifList" style="display:flex; flex-direction:column; gap:10px;"></div>
+</section>
+
+<style>
+  .notif-row {
+    display: block;
+    padding: 16px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .notif-row.unread {
+    border-left: 3px solid var(--marigold-deep);
+    background: rgba(232,163,61,0.05);
+  }
+  .notif-message { font-size: 0.9rem; }
+  .notif-time { font-size: 0.75rem; color: var(--slate); margin-top: 4px; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/messaging.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  (async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+    loadNotifications();
+  })();
+
+  async function loadNotifications() {
+    const list = document.getElementById('notifList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const notifs = await getMyNotifications();
+
+    if (notifs.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No notifications yet.</p>';
+      return;
+    }
+
+    list.innerHTML = notifs.map(n => `
+      <a href="${n.link || '#'}" class="notif-row ${!n.read ? 'unread' : ''}" onclick="markNotificationRead('${n.id}')">
+        <div class="notif-message">${n.message}</div>
+        <div class="notif-time">${new Date(n.created_at).toLocaleString()}</div>
+      </a>
+    `).join('');
+  }
+
+  document.getElementById('markAllBtn').addEventListener('click', async () => {
+    await markAllRead();
+    loadNotifications();
+  });
+</script>
+</body>
+</html>

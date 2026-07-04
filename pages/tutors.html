@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Tutors — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links">
+      <a href="jobs.html">Find Jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="schools.html">Schools</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions" id="navActions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Log in</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get started</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container">
+    <span class="eyebrow">Private lessons</span>
+    <h1>Find a tutor for any subject.</h1>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search subject or tutor name...">
+      <select id="locationFilter">
+        <option value="">All locations</option>
+        <option value="Lagos">Lagos</option>
+        <option value="Abuja">Abuja</option>
+        <option value="Port Harcourt">Port Harcourt</option>
+        <option value="Ibadan">Ibadan</option>
+      </select>
+      <select id="modeFilter">
+        <option value="">Online or in-person</option>
+        <option value="Online">Online</option>
+        <option value="In-person">In-person</option>
+      </select>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LISTINGS ================= -->
+<section class="listing-layout">
+  <div class="container">
+    <p class="results-meta" id="resultsMeta">Loading tutors...</p>
+    <div class="listing-grid" id="tutorsGrid"></div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="../index.html" class="logo">Kla<span>so</span></a>
+        <p>The trusted marketplace connecting Nigerian schools, teachers, and private tutors.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <a href="jobs.html">Find jobs</a>
+        <a href="tutors.html">Find tutors</a>
+        <a href="schools.html">Browse schools</a>
+        <a href="pricing.html">Pricing</a>
+      </div>
+      <div class="footer-col">
+        <h4>For Tutors</h4>
+        <a href="register.html?role=tutor">Start tutoring</a>
+        <a href="pricing.html">Get featured</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Klaso. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/messaging.js"></script>
+<script src="../js/main.js"></script>
+<script src="../data/tutors.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script>
+  async function renderTutors() {
+    const grid = document.getElementById('tutorsGrid');
+    const meta = document.getElementById('resultsMeta');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const location = document.getElementById('locationFilter').value;
+    const mode = document.getElementById('modeFilter').value;
+
+    let tutors = await getTutors();;
+
+    tutors = tutors.filter(t => {
+      const matchesSearch = t.name.toLowerCase().includes(search) ||
+        t.subjects.join(' ').toLowerCase().includes(search);
+      const matchesLocation = !location || t.location === location;
+      const matchesMode = !mode || t.mode === mode;
+      return matchesSearch && matchesLocation && matchesMode;
+    });
+
+    meta.textContent = tutors.length + ' tutor' + (tutors.length !== 1 ? 's' : '') + ' found';
+
+    if (tutors.length === 0) {
+      grid.innerHTML = '<div class="empty-state"><h3>No tutors match your search</h3><p>Try adjusting your filters or search term.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = tutors.map(t => `
+      <div class="job-card">
+        <div class="job-card-top">
+          <div>
+            <div class="job-school">${t.location} · ${t.mode} · ★ ${t.rating || 'New'}</div>
+            <h3><a href="view-profile.html?id=${t.tutor_id}" style="color:inherit;">${t.name}</a></h3>
+          </div>
+          ${t.verified ? '<span class="stamp stamp-verified">Verified</span>' : ''}
+          ${t.featured && !t.verified ? '<span class="stamp stamp-pro">Featured</span>' : ''}
+        </div>
+        <div class="job-meta">
+          ${t.subjects.map(s => `<span class="tag">${s}</span>`).join('')}
+        </div>
+        <p style="color:var(--slate); font-size:0.88rem; margin-bottom:16px;">${t.bio}</p>
+        <div class="job-foot">
+          <span class="job-pay">${t.rate}</span>
+          <button class="btn btn-sm btn-ghost" onclick="bookTutor('${t.id}', '${t.name.replace(/'/g, "\\'")}')">Book session</button>
+          <button class="btn btn-sm btn-ghost" onclick="messageTutor('${t.tutor_id}')">💬 Message</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('searchInput').addEventListener('input', renderTutors);
+  document.getElementById('locationFilter').addEventListener('change', renderTutors);
+  document.getElementById('modeFilter').addEventListener('change', renderTutors);
+async function bookTutor(tutorId, tutorName) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    alert('Please log in to book a tutor.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('role, avatar_url')
+    .eq('id', session.user.id)
+    .single();
+
+  if (profile && profile.role === 'tutor') {
+    alert('Tutor accounts cannot book other tutors.');
+    return;
+  }
+  if (!profile.avatar_url) {
+    alert('Please add a profile photo before booking. This helps tutors trust your request.');
+    window.location.href = 'profile.html';
+    return;
+  }
+
+  const message = prompt(`Booking a session with ${tutorName}. Add a short message (e.g. preferred day/time):`);
+  if (message === null) return;
+
+  const { error } = await supabaseClient
+    .from('bookings')
+    .insert({
+      tutor_id: tutorId,
+      student_id: session.user.id,
+      message: message || null
+    });
+
+  if (error) {
+    alert('Error booking: ' + error.message);
+    return;
+  }
+
+  await createNotification(tutorId, 'booking', 'You have a new booking request', 'my-bookings.html');
+
+  alert('✓ Booking request sent! The tutor will confirm shortly.');
+}
+async function messageTutor(tutorId) {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) {
+    alert('Please log in to message this tutor.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  if (session.user.id === tutorId) {
+    alert('You cannot message yourself.');
+    return;
+  }
+
+  const result = await getOrCreateConversation(tutorId);
+
+  if (!result.success) {
+    alert('Error starting conversation: ' + result.message);
+    return;
+  }
+
+  window.location.href = 'chat.html?id=' + result.conversation.id;
+}
+  renderTutors();
+</script>
+</body>
+</html>
