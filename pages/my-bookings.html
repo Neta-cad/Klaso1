@@ -121,6 +121,7 @@
       <div class="booking-card">
         <div>
           <strong><a href="view-profile.html?id=${b.student_id}" style="color:inherit;">${b.profiles ? b.profiles.name : 'Student'}</a></strong>
+          ${b.preferred_date || b.preferred_time ? `<p style="font-size:0.85rem; color:var(--chalk-green); margin-top:4px;">📅 ${b.preferred_date || ''} ${b.preferred_time || ''}</p>` : ''}
           ${b.message ? `<p style="font-size:0.85rem; color:var(--slate); margin-top:4px;">"${b.message}"</p>` : ''}
           <span style="font-size:0.78rem; color:var(--slate);">${new Date(b.created_at).toLocaleDateString()}</span>
           <br><button class="btn btn-sm btn-ghost" style="margin-top:6px;" onclick="messageStudent('${b.student_id}')">💬 Message</button>

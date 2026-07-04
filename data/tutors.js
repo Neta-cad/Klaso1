@@ -36,7 +36,8 @@ async function addTutorListing(listing) {
       location: listing.location,
       mode: listing.mode,
       rate: listing.rate,
-      bio: listing.bio
+      bio: listing.bio,
+      availability: listing.availability
     })
     .select();
 

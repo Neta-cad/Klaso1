@@ -12,7 +12,7 @@ async function updateNav() {
   if (session) {
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('name, role')
+      .select('name, role, is_admin')
       .eq('id', session.user.id)
       .single();
 
@@ -31,8 +31,14 @@ async function updateNav() {
     } else if (profile && profile.role === 'student') {
       dashboardLink = `<a href="${prefix}my-learning.html" class="btn btn-ghost btn-sm">My Learning</a>`;
     }
+    
+    let adminLink = '';
+    if (profile && profile.is_admin) {
+      adminLink = `<a href="${prefix}admin.html" class="btn btn-ghost btn-sm" title="Admin dashboard">👑</a>`;
+    }
 
     navActions.innerHTML = `
+     ${adminLink}
       ${dashboardLink}
       <a href="${prefix}notifications.html" class="btn btn-ghost btn-sm" style="position:relative;">
         🔔${unreadCount > 0 ? `<span style="position:absolute; top:-4px; right:-4px; background:var(--coral); color:white; font-size:0.62rem; font-weight:700; border-radius:999px; width:16px; height:16px; display:flex; align-items:center; justify-content:center;">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}
