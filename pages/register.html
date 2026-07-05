@@ -164,7 +164,17 @@
     document.getElementById('successMsg').textContent = '✓ Account created! Redirecting...';
 
     setTimeout(() => {
-      window.location.href = '../index.html';
+      if (role.value === 'school') {
+        window.location.href = 'school-dashboard.html';
+      } else if (role.value === 'teacher') {
+        window.location.href = 'teacher-dashboard.html';
+      } else if (role.value === 'tutor') {
+        window.location.href = 'tutor-dashboard.html';
+      } else if (role.value === 'student') {
+        window.location.href = 'student-dashboard.html';
+      } else {
+        window.location.href = '../index.html';
+      }
     }, 1200);
   });
 </script>
