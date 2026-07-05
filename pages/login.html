@@ -98,6 +98,8 @@
 
     if (profile && profile.role === 'school') {
       window.location.href = 'school-dashboard.html';
+    } else if (profile && profile.role === 'teacher') {
+      window.location.href = 'teacher-dashboard.html';
     } else {
       window.location.href = '../index.html';
     }
