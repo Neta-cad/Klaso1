@@ -12,7 +12,7 @@
 <header class="nav">
   <div class="nav-inner">
     <a href="../index.html" class="logo">Kla<span>so</span></a>
-    <<nav class="nav-links" id="navLinks">
+    <nav class="nav-links" id="navLinks">
       <a href="jobs.html">Find Jobs</a>
       <a href="tutors.html">Find Tutors</a>
       <a href="schools.html">Schools</a>
@@ -56,6 +56,45 @@
     <div class="listing-grid" id="jobsGrid"></div>
   </div>
 </section>
+<!-- ================= APPLY MODAL ================= -->
+<div id="applyModal" style="display:none; position:fixed; inset:0; background:rgba(27,42,74,0.6); z-index:200; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--white); border-radius:var(--radius); padding:28px; max-width:480px; width:100%; max-height:88vh; overflow-y:auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+      <h3 id="applyModalTitle" style="font-size:1.1rem;">Apply</h3>
+      <button id="closeApplyModal" style="font-size:1.4rem; line-height:1; color:var(--slate);">×</button>
+    </div>
+
+    <form id="applyForm" style="display:flex; flex-direction:column; gap:14px;">
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Cover message</label>
+        <textarea id="coverMessage" rows="4" placeholder="Why are you a good fit for this role?"
+          style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem; resize:vertical;"></textarea>
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Years of experience</label>
+        <select id="yearsExperience" style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem;">
+          <option value="0-1">0–1 years</option>
+          <option value="2-3">2–3 years</option>
+          <option value="4-6">4–6 years</option>
+          <option value="7+">7+ years</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Available start date (optional)</label>
+        <input type="date" id="startDate" style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Upload CV / Certificate (optional)</label>
+        <input type="file" id="cvInput" accept=".pdf,.doc,.docx,.jpg,.png" style="width:100%;">
+      </div>
+
+      <button type="submit" id="applySubmitBtn" class="btn btn-accent btn-block" style="margin-top:6px;">Submit application</button>
+    </form>
+  </div>
+</div>
 
 <!-- ================= FOOTER ================= -->
 <footer class="footer">
@@ -265,45 +304,7 @@ async function messageSchool(schoolId) {
 
   window.location.href = 'chat.html?id=' + result.conversation.id;
 }
-<!-- ================= APPLY MODAL ================= -->
-<div id="applyModal" style="display:none; position:fixed; inset:0; background:rgba(27,42,74,0.6); z-index:200; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--white); border-radius:var(--radius); padding:28px; max-width:480px; width:100%; max-height:88vh; overflow-y:auto;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-      <h3 id="applyModalTitle" style="font-size:1.1rem;">Apply</h3>
-      <button id="closeApplyModal" style="font-size:1.4rem; line-height:1; color:var(--slate);">×</button>
-    </div>
 
-    <form id="applyForm" style="display:flex; flex-direction:column; gap:14px;">
-      <div>
-        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Cover message</label>
-        <textarea id="coverMessage" rows="4" placeholder="Why are you a good fit for this role?"
-          style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem; resize:vertical;"></textarea>
-      </div>
-
-      <div>
-        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Years of experience</label>
-        <select id="yearsExperience" style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem;">
-          <option value="0-1">0–1 years</option>
-          <option value="2-3">2–3 years</option>
-          <option value="4-6">4–6 years</option>
-          <option value="7+">7+ years</option>
-        </select>
-      </div>
-
-      <div>
-        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Available start date (optional)</label>
-        <input type="date" id="startDate" style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem;">
-      </div>
-
-      <div>
-        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Upload CV / Certificate (optional)</label>
-        <input type="file" id="cvInput" accept=".pdf,.doc,.docx,.jpg,.png" style="width:100%;">
-      </div>
-
-      <button type="submit" id="applySubmitBtn" class="btn btn-accent btn-block" style="margin-top:6px;">Submit application</button>
-    </form>
-  </div>
-</div>
   renderJobs();
 </script>
 </body>
