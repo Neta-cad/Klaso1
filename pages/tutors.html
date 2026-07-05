@@ -148,6 +148,9 @@
   document.getElementById('searchInput').addEventListener('input', renderTutors);
   document.getElementById('locationFilter').addEventListener('change', renderTutors);
   document.getElementById('modeFilter').addEventListener('change', renderTutors);
+let pendingTutorId = null;
+let pendingTutorName = null;
+
 async function bookTutor(tutorId, tutorName) {
   const { data: { session } } = await supabaseClient.auth.getSession();
 
@@ -167,40 +170,55 @@ async function bookTutor(tutorId, tutorName) {
     alert('Tutor accounts cannot book other tutors.');
     return;
   }
+
   if (!profile.avatar_url) {
     alert('Please add a profile photo before booking. This helps tutors trust your request.');
     window.location.href = 'profile.html';
     return;
   }
 
-  const preferredDate = prompt(`Booking a session with ${tutorName}. What date would you like? (e.g. 2026-07-15)`);
-  if (preferredDate === null) return;
+  pendingTutorId = tutorId;
+  pendingTutorName = tutorName;
+  document.getElementById('bookModalTitle').textContent = 'Book a session with ' + tutorName;
+  document.getElementById('bookModal').style.display = 'flex';
+}
 
-  const preferredTime = prompt('What time works for you? (e.g. 4:00 PM)');
-  if (preferredTime === null) return;
+document.getElementById('closeBookModal').addEventListener('click', () => {
+  document.getElementById('bookModal').style.display = 'none';
+});
 
-  const message = prompt('Add any additional notes (optional):');
-  if (message === null) return;
+document.getElementById('bookForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const submitBtn = document.getElementById('bookSubmitBtn');
+  submitBtn.textContent = 'Sending...';
+  submitBtn.disabled = true;
 
   const { error } = await supabaseClient
     .from('bookings')
     .insert({
-      tutor_id: tutorId,
+      tutor_id: pendingTutorId,
       student_id: session.user.id,
-      message: message || null,
-      preferred_date: preferredDate || null,
-      preferred_time: preferredTime || null
+      message: document.getElementById('bookMessage').value || null,
+      preferred_date: document.getElementById('bookDate').value || null,
+      preferred_time: document.getElementById('bookTime').value || null
     });
+
+  submitBtn.textContent = 'Send booking request';
+  submitBtn.disabled = false;
 
   if (error) {
     alert('Error booking: ' + error.message);
     return;
   }
 
-  await createNotification(tutorId, 'booking', 'You have a new booking request', 'my-bookings.html');
+  await createNotification(pendingTutorId, 'booking', 'You have a new booking request', 'my-bookings.html');
 
+  document.getElementById('bookModal').style.display = 'none';
+  document.getElementById('bookForm').reset();
   alert('✓ Booking request sent! The tutor will confirm shortly.');
-}
+});
 async function messageTutor(tutorId) {
   const { data: { session } } = await supabaseClient.auth.getSession();
 
@@ -224,6 +242,35 @@ async function messageTutor(tutorId) {
 
   window.location.href = 'chat.html?id=' + result.conversation.id;
 }
+<!-- ================= BOOK MODAL ================= -->
+<div id="bookModal" style="display:none; position:fixed; inset:0; background:rgba(27,42,74,0.6); z-index:200; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--white); border-radius:var(--radius); padding:28px; max-width:480px; width:100%; max-height:88vh; overflow-y:auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+      <h3 id="bookModalTitle" style="font-size:1.1rem;">Book a session</h3>
+      <button id="closeBookModal" style="font-size:1.4rem; line-height:1; color:var(--slate);">×</button>
+    </div>
+
+    <form id="bookForm" style="display:flex; flex-direction:column; gap:14px;">
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Preferred date</label>
+        <input type="date" id="bookDate" required style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Preferred time</label>
+        <input type="time" id="bookTime" required style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem;">
+      </div>
+
+      <div>
+        <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Notes (optional)</label>
+        <textarea id="bookMessage" rows="3" placeholder="What would you like to focus on?"
+          style="width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:0.92rem; resize:vertical;"></textarea>
+      </div>
+
+      <button type="submit" id="bookSubmitBtn" class="btn btn-accent btn-block" style="margin-top:6px;">Send booking request</button>
+    </form>
+  </div>
+</div>
   renderTutors();
 </script>
 </body>

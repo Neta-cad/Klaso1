@@ -154,7 +154,12 @@
               <div class="applicant-row">
                 <div>
                   <strong><a href="view-profile.html?id=${a.applicant_id}" style="color:inherit;">${a.profiles ? a.profiles.name : 'Applicant'}</a></strong>
-                  ${a.message ? `<p style="font-size:0.85rem; color:var(--slate); margin-top:4px;">"${a.message}"</p>` : ''}
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+                    ${a.years_experience ? `<span class="tag">${a.years_experience} yrs exp</span>` : ''}
+                    ${a.start_date ? `<span class="tag">Available ${a.start_date}</span>` : ''}
+                    ${a.cv_url ? `<a href="${a.cv_url}" target="_blank" class="tag" style="color:var(--marigold-deep); text-decoration:none;">📄 View CV</a>` : ''}
+                  </div>
+                  ${a.message ? `<p style="font-size:0.85rem; color:var(--slate); margin-top:6px;">"${a.message}"</p>` : ''}
                   <button class="btn btn-sm btn-ghost" style="margin-top:6px;" onclick="messageApplicant('${a.applicant_id}')">💬 Message</button>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
