@@ -100,6 +100,10 @@
       window.location.href = 'school-dashboard.html';
     } else if (profile && profile.role === 'teacher') {
       window.location.href = 'teacher-dashboard.html';
+    } else if (profile && profile.role === 'tutor') {
+      window.location.href = 'tutor-dashboard.html';
+    } else if (profile && profile.role === 'student') {
+      window.location.href = 'student-dashboard.html';
     } else {
       window.location.href = '../index.html';
     }

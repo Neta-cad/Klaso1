@@ -37,19 +37,32 @@ async function updateNav() {
           <a href="${prefix}my-applications.html">My Applications</a>
           <a href="${prefix}resources.html">Resources</a>
         `;
+      } else if (profile.role === 'tutor') {
+        navLinksEl.innerHTML = `
+          <a href="${prefix}tutor-dashboard.html">Dashboard</a>
+          <a href="${prefix}my-bookings.html">My Bookings</a>
+          <a href="${prefix}become-tutor.html">Edit Listing</a>
+          <a href="${prefix}resources.html">Resources</a>
+        `;
+      } else if (profile.role === 'student') {
+        navLinksEl.innerHTML = `
+          <a href="${prefix}student-dashboard.html">Dashboard</a>
+          <a href="${prefix}tutors.html">Find Tutors</a>
+          <a href="${prefix}my-learning.html">My Learning</a>
+          <a href="${prefix}resources.html">Resources</a>
+        `;
       }
-      // Tutor and Student nav sets coming next
     }
 
     let dashboardLink = '';
     if (profile && profile.role === 'school') {
       dashboardLink = `<a href="${prefix}school-dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
     } else if (profile && profile.role === 'tutor') {
-      dashboardLink = `<a href="${prefix}my-bookings.html" class="btn btn-ghost btn-sm">My Bookings</a>`;
+      dashboardLink = `<a href="${prefix}tutor-dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
     } else if (profile && profile.role === 'teacher') {
       dashboardLink = `<a href="${prefix}teacher-dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
     } else if (profile && profile.role === 'student') {
-      dashboardLink = `<a href="${prefix}my-learning.html" class="btn btn-ghost btn-sm">My Learning</a>`;
+      dashboardLink = `<a href="${prefix}student-dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
     }
 
     let adminLink = '';

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="student-dashboard.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="tutors.html">Find Tutors</a>
+      <a href="resources.html">Resources</a>
+    </nav>
+    <div class="nav-actions" id="navActions"></div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<div id="accessDenied" style="display:none; text-align:center; padding:80px 20px;">
+  <h2>🚫 This dashboard is for students/parents only</h2>
+</div>
+
+<div id="dashboardRoot" style="display:none;">
+
+  <!-- ================= HERO GREETING ================= -->
+  <section style="padding:40px 20px 0;">
+    <div class="container">
+      <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+        <img id="myAvatar" src="" style="width:64px; height:64px; border-radius:14px; object-fit:cover; background:var(--paper-dim); border:2px solid var(--line); display:none;">
+        <div id="myAvatarPlaceholder" style="width:64px; height:64px; border-radius:14px; background:var(--paper-dim); border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:1.6rem;">👤</div>
+        <div>
+          <span class="eyebrow">Welcome back</span>
+          <h1 id="myName" style="font-size:clamp(1.6rem,4vw,2.2rem); margin-top:2px;">Loading...</h1>
+        </div>
+        <span id="planBadge" class="stamp" style="margin-left:auto;"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TODAY CARD ================= -->
+  <section style="padding:24px 20px 0;">
+    <div class="container">
+      <div id="todayCard" style="border-radius:var(--radius); padding:26px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+        <div>
+          <span id="todayEyebrow" style="font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase;"></span>
+          <h2 id="todayMessage" style="font-size:1.3rem; margin-top:6px;"></h2>
+        </div>
+        <a id="todayAction" href="#" class="btn"></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATS ================= -->
+  <section style="padding:24px 20px 0;">
+    <div class="container">
+      <div style="background:var(--white); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;">
+        <div style="display:grid; grid-template-columns:repeat(3,1fr);">
+          <div style="padding:18px; text-align:center; border-right:1px dotted var(--line);">
+            <div style="font-family:var(--font-mono); font-size:1.5rem; font-weight:600;" id="statTotal">–</div>
+            <div style="font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.04em; margin-top:4px;">Total bookings</div>
+          </div>
+          <div style="padding:18px; text-align:center; border-right:1px dotted var(--line);">
+            <div style="font-family:var(--font-mono); font-size:1.5rem; font-weight:600; color:var(--chalk-green);" id="statConfirmed">–</div>
+            <div style="font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.04em; margin-top:4px;">Confirmed</div>
+          </div>
+          <div style="padding:18px; text-align:center;">
+            <div style="font-family:var(--font-mono); font-size:1.5rem; font-weight:600;" id="statCompleted">–</div>
+            <div style="font-size:0.72rem; color:var(--slate); text-transform:uppercase; letter-spacing:0.04em; margin-top:4px;">Completed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAIN GRID ================= -->
+  <section style="padding:32px 20px 60px;">
+    <div class="container" style="display:grid; grid-template-columns:1.4fr 1fr; gap:24px;">
+
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <h3 style="font-size:1.05rem;">My bookings</h3>
+          <a href="my-learning.html" style="font-size:0.85rem; color:var(--marigold-deep); font-weight:600;">View all →</a>
+        </div>
+        <div id="bookingsPreview" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+        <div style="margin-top:24px;">
+          <a href="tutors.html" class="btn btn-accent">🔍 Find a tutor</a>
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <h3 style="font-size:1.05rem;">Messages</h3>
+          <a href="messages.html" style="font-size:0.85rem; color:var(--marigold-deep); font-weight:600;">View all →</a>
+        </div>
+        <div id="messagesPreview" style="display:flex; flex-direction:column; gap:8px; margin-bottom:28px;"></div>
+
+        <h3 style="font-size:1.05rem; margin-bottom:14px;">Quick links</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <a href="profile.html" class="btn btn-ghost" style="justify-content:flex-start;">✏️ Edit my profile</a>
+          <a href="resources.html" class="btn btn-ghost" style="justify-content:flex-start;">📚 Browse resources</a>
+          <a href="referrals.html" class="btn btn-ghost" style="justify-content:flex-start;">🎁 Refer & earn</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<style>
+  .app-mini-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  @media (max-width: 900px) {
+    #dashboardRoot section > .container[style*="grid-template-columns:1.4fr"] {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/messaging.js"></script>
+<script src="../js/reviews.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script src="../js/main.js"></script>
+<script>
+  let myId = null;
+
+  (async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id).single();
+
+    if (!profile || profile.role !== 'student') {
+      document.getElementById('accessDenied').style.display = 'block';
+      return;
+    }
+
+    myId = session.user.id;
+    document.getElementById('dashboardRoot').style.display = 'block';
+    document.getElementById('myName').textContent = profile.name;
+
+    if (profile.avatar_url) {
+      document.getElementById('myAvatar').src = profile.avatar_url;
+      document.getElementById('myAvatar').style.display = 'block';
+      document.getElementById('myAvatarPlaceholder').style.display = 'none';
+    }
+
+    const planBadge = document.getElementById('planBadge');
+    if (profile.plan === 'pro') {
+      planBadge.textContent = 'Pro';
+      planBadge.className = 'stamp stamp-pro';
+    } else {
+      planBadge.textContent = 'Free plan';
+      planBadge.style.color = 'var(--slate)';
+      planBadge.style.borderColor = 'var(--line)';
+    }
+
+    loadEverything();
+  })();
+
+  async function loadEverything() {
+    const { data: bookings } = await supabaseClient
+      .from('bookings')
+      .select('*, profiles!bookings_tutor_id_fkey(name)')
+      .eq('student_id', myId)
+      .order('created_at', { ascending: false });
+
+    const allBookings = bookings || [];
+    const confirmed = allBookings.filter(b => b.status === 'confirmed');
+    const completed = allBookings.filter(b => b.status === 'completed');
+
+    document.getElementById('statTotal').textContent = allBookings.length;
+    document.getElementById('statConfirmed').textContent = confirmed.length;
+    document.getElementById('statCompleted').textContent = completed.length;
+
+    const todayCard = document.getElementById('todayCard');
+    const eyebrow = document.getElementById('todayEyebrow');
+    const message = document.getElementById('todayMessage');
+    const action = document.getElementById('todayAction');
+
+    if (confirmed.length > 0) {
+      todayCard.style.background = 'var(--chalk-green)';
+      eyebrow.style.color = 'rgba(255,255,255,0.8)';
+      eyebrow.textContent = 'Coming up';
+      message.textContent = `You have ${confirmed.length} confirmed session${confirmed.length !== 1 ? 's' : ''}`;
+      message.style.color = 'var(--paper)';
+      action.textContent = 'View bookings';
+      action.className = 'btn btn-ghost';
+      action.style.borderColor = 'rgba(255,255,255,0.4)';
+      action.style.color = 'var(--paper)';
+      action.href = 'my-learning.html';
+    } else if (allBookings.length === 0) {
+      todayCard.style.background = 'var(--ink)';
+      eyebrow.style.color = 'var(--marigold)';
+      eyebrow.textContent = 'Get started';
+      message.textContent = "You haven't booked a tutor yet";
+      message.style.color = 'var(--paper)';
+      action.textContent = 'Find a tutor';
+      action.className = 'btn btn-accent';
+      action.href = 'tutors.html';
+    } else {
+      todayCard.style.background = 'var(--marigold)';
+      eyebrow.style.color = 'var(--ink)';
+      eyebrow.textContent = 'Waiting';
+      message.textContent = 'Your booking requests are pending confirmation';
+      message.style.color = 'var(--ink)';
+      action.textContent = 'View bookings';
+      action.className = 'btn btn-primary';
+      action.href = 'my-learning.html';
+    }
+
+    const preview = document.getElementById('bookingsPreview');
+    if (allBookings.length === 0) {
+      preview.innerHTML = '<p style="color:var(--slate); font-size:0.9rem;">No bookings yet.</p>';
+    } else {
+      preview.innerHTML = allBookings.slice(0, 4).map(b => `
+        <div class="app-mini-card">
+          <div>
+            <strong style="font-size:0.9rem;">${b.profiles ? b.profiles.name : 'Tutor'}</strong>
+            <div style="font-size:0.78rem; color:var(--slate);">${b.preferred_date || ''} ${b.preferred_time || ''}</div>
+          </div>
+          <span class="tag">${b.status}</span>
+        </div>
+      `).join('');
+    }
+
+    const conversations = await getMyConversations();
+    const msgPreview = document.getElementById('messagesPreview');
+    if (conversations.length === 0) {
+      msgPreview.innerHTML = '<p style="color:var(--slate); font-size:0.9rem;">No messages yet.</p>';
+    } else {
+      msgPreview.innerHTML = conversations.slice(0, 3).map(c => `
+        <a href="chat.html?id=${c.id}" class="app-mini-card" style="text-decoration:none; color:inherit;">
+          <div>
+            <strong style="font-size:0.88rem;">${c.otherUser ? c.otherUser.name : 'User'}</strong>
+            <div style="font-size:0.78rem; color:var(--slate); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${c.last_message || 'No messages'}</div>
+          </div>
+        </a>
+      `).join('');
+    }
+  }
+</script>
+</body>
+</html>
