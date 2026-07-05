@@ -12,7 +12,7 @@
 <header class="nav">
   <div class="nav-inner">
     <a href="../index.html" class="logo">Kla<span>so</span></a>
-    <nav class="nav-links">
+    <nav class="nav-links" id="navLinks">
       <a href="jobs.html">Find Jobs</a>
       <a href="tutors.html">Find Tutors</a>
       <a href="schools.html">Schools</a>
@@ -29,7 +29,8 @@
 <!-- ================= PAGE HEADER ================= -->
 <section class="page-header">
   <div class="container">
-    <span class="eyebrow">For school owners</span>
+    <a href="school-dashboard.html" style="font-size:0.85rem; color:var(--slate);">← Back to dashboard</a>
+    <span class="eyebrow" style="display:block; margin-top:10px;">For school owners</span>
     <h1>Post a job opening.</h1>
     <p class="lede" style="margin-top:10px;">Your first job post is free. Fill in the details below.</p>
   </div>
@@ -145,8 +146,8 @@
         .eq('status', 'open');
 
       if (count >= 1) {
-        alert('Free accounts can only have 1 active job post. Upgrade to Pro for unlimited job posts.');
-        window.location.href = 'pricing.html';
+        alert('Your free plan allows 1 active job post. Close your current job or upgrade to Pro for unlimited posts.');
+        window.location.href = 'school-dashboard.html';
         return;
       }
     }

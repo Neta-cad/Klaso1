@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Jobs — Klaso</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="school-dashboard.html" class="logo">Kla<span>so</span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="jobs.html">Browse jobs</a>
+      <a href="tutors.html">Find Tutors</a>
+      <a href="resources.html">Resources</a>
+    </nav>
+    <div class="nav-actions" id="navActions"></div>
+    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<!-- ================= PAGE HEADER ================= -->
+<section class="page-header">
+  <div class="container" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;">
+    <div>
+      <a href="school-dashboard.html" style="font-size:0.85rem; color:var(--slate);">← Back to dashboard</a>
+      <span class="eyebrow" style="display:block; margin-top:10px;">School dashboard</span>
+      <h1>All my jobs</h1>
+    </div>
+    <a href="post-job.html" class="btn btn-accent">+ Post a job</a>
+  </div>
+</section>
+
+<!-- ================= LIST ================= -->
+<section class="container" style="padding:32px 20px;">
+  <div id="jobsList" style="display:flex; flex-direction:column; gap:14px;"></div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/auth-nav.js"></script>
+<script src="../js/main.js"></script>
+<script>
+  let currentUserId = null;
+
+  (async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', session.user.id).single();
+    if (!profile || profile.role !== 'school') {
+      alert('This page is for school owners only.');
+      window.location.href = '../index.html';
+      return;
+    }
+
+    currentUserId = session.user.id;
+    loadJobs();
+  })();
+
+  async function loadJobs() {
+    const list = document.getElementById('jobsList');
+    list.innerHTML = '<p style="color:var(--slate);">Loading...</p>';
+
+    const { data: jobs, error } = await supabaseClient
+      .from('jobs')
+      .select('*')
+      .eq('school_id', currentUserId)
+      .order('created_at', { ascending: false });
+
+    if (error || !jobs || jobs.length === 0) {
+      list.innerHTML = '<p style="color:var(--slate);">No jobs posted yet. <a href="post-job.html" style="color:var(--marigold-deep); font-weight:600;">Post your first job →</a></p>';
+      return;
+    }
+
+    let html = '';
+    for (const job of jobs) {
+      const { count } = await supabaseClient
+        .from('applications')
+        .select('*', { count: 'exact', head: true })
+        .eq('job_id', job.id);
+
+      html += `
+        <div class="job-card">
+          <div class="job-card-top">
+            <div>
+              <div class="job-school">${job.location} · ${job.type} · ${count || 0} applicant${count !== 1 ? 's' : ''}</div>
+              <h3>${job.title}</h3>
+            </div>
+            <span class="tag ${job.status === 'open' ? '' : 'tag-hot'}">${job.status}</span>
+          </div>
+          <div class="job-meta">
+            <span class="tag">${job.level}</span>
+            <span class="tag">${job.mode}</span>
+          </div>
+          <div class="job-foot">
+            <span class="job-pay">${job.pay}</span>
+            <div style="display:flex; gap:8px;">
+              <a href="my-applicants.html" class="btn btn-sm btn-ghost">View applicants</a>
+              ${job.status === 'open'
+                ? `<button class="btn btn-sm btn-ghost" onclick="toggleStatus('${job.id}', 'closed')">Close</button>`
+                : `<button class="btn btn-sm btn-ghost" onclick="toggleStatus('${job.id}', 'open')">Reopen</button>`}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    list.innerHTML = html;
+  }
+
+  async function toggleStatus(jobId, newStatus) {
+    await supabaseClient.from('jobs').update({ status: newStatus }).eq('id', jobId);
+    loadJobs();
+  }
+</script>
+</body>
+</html>

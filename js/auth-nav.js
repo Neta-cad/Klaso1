@@ -21,17 +21,37 @@ async function updateNav() {
     const prefix = window.location.pathname.includes('/pages/') ? '' : 'pages/';
     const unreadCount = typeof getUnreadCount === 'function' ? await getUnreadCount() : 0;
 
+    const navLinksEl = document.getElementById('navLinks');
+    if (navLinksEl && profile) {
+      if (profile.role === 'school') {
+        navLinksEl.innerHTML = `
+          <a href="${prefix}school-dashboard.html">Dashboard</a>
+          <a href="${prefix}my-jobs.html">My Jobs</a>
+          <a href="${prefix}post-job.html">Post a Job</a>
+          <a href="${prefix}resources.html">Resources</a>
+        `;
+      } else if (profile.role === 'teacher') {
+        navLinksEl.innerHTML = `
+          <a href="${prefix}teacher-dashboard.html">Dashboard</a>
+          <a href="${prefix}jobs.html">Browse Jobs</a>
+          <a href="${prefix}my-applications.html">My Applications</a>
+          <a href="${prefix}resources.html">Resources</a>
+        `;
+      }
+      // Tutor and Student nav sets coming next
+    }
+
     let dashboardLink = '';
     if (profile && profile.role === 'school') {
-      dashboardLink = `<a href="${prefix}my-applicants.html" class="btn btn-ghost btn-sm">My Jobs</a>`;
+      dashboardLink = `<a href="${prefix}school-dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
     } else if (profile && profile.role === 'tutor') {
       dashboardLink = `<a href="${prefix}my-bookings.html" class="btn btn-ghost btn-sm">My Bookings</a>`;
     } else if (profile && profile.role === 'teacher') {
-      dashboardLink = `<a href="${prefix}my-applications.html" class="btn btn-ghost btn-sm">My Applications</a>`;
+      dashboardLink = `<a href="${prefix}teacher-dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>`;
     } else if (profile && profile.role === 'student') {
       dashboardLink = `<a href="${prefix}my-learning.html" class="btn btn-ghost btn-sm">My Learning</a>`;
     }
-    
+
     let adminLink = '';
     if (profile && profile.is_admin) {
       adminLink = `<a href="${prefix}admin.html" class="btn btn-ghost btn-sm" title="Admin dashboard">👑</a>`;
